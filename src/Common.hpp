@@ -4,6 +4,10 @@
 #include <clang/Tooling/Transformer/RewriteRule.h>
 
 namespace dead {
+
+std::string GetFilenameFromRange(const clang::CharSourceRange &R,
+                                 const clang::SourceManager &SM);
+
 namespace detail {
 class RuleActionCallback
     : public clang::ast_matchers::MatchFinder::MatchCallback {

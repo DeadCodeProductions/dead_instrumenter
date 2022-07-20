@@ -8,6 +8,16 @@ using namespace transformer;
 
 namespace dead {
 
+std::string GetFilenameFromRange(const CharSourceRange &R,
+                                 const SourceManager &SM) {
+    const std::pair<FileID, unsigned> DecomposedLocation =
+        SM.getDecomposedLoc(SM.getSpellingLoc(R.getBegin()));
+    const FileEntry *Entry = SM.getFileEntryForID(DecomposedLocation.first);
+    return std::string(Entry ? Entry->getName() : "");
+}
+
+
+
 void detail::RuleActionCallback::registerMatchers(
     ast_matchers::MatchFinder &Finder) {
     for (auto &Matcher : transformer::detail::buildMatchers(Rule))

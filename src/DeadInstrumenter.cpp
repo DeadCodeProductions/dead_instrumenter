@@ -53,13 +53,6 @@ enum class EditMetadataKind {
     IfAtLeastOneDefinedElse,
     NewElseBranch
 };
-std::string GetFilenameFromRange(const CharSourceRange &R,
-                                 const SourceManager &SM) {
-    const std::pair<FileID, unsigned> DecomposedLocation =
-        SM.getDecomposedLoc(SM.getSpellingLoc(R.getBegin()));
-    const FileEntry *Entry = SM.getFileEntryForID(DecomposedLocation.first);
-    return std::string(Entry ? Entry->getName() : "");
-}
 
 auto TwoDeleteMacrosTemplate(int N1, int N2, StringRef Op) {
     return ("\n\n#if !defined(DeleteBlockDCEMarker" + std::to_string(N1) +
