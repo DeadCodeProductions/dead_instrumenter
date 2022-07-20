@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include <DeadInstrumenter.hpp>
+#include <ValueRangeTagger.hpp>
 
 using namespace llvm;
 using namespace clang;
@@ -16,13 +17,15 @@ using namespace clang::ast_matchers;
 
 namespace {
 
-enum class ToolMode { MakeGlobalsStaticOnly, InstrumentBranches };
+enum class ToolMode { MakeGlobalsStaticOnly, InstrumentBranches, TagVariables };
 
 cl::opt<ToolMode>
     Mode("mode", cl::desc("dead-instrumenter mode:"),
          cl::values(
              clEnumValN(ToolMode::MakeGlobalsStaticOnly, "globals",
                         "Only make globals static"),
+             clEnumValN(ToolMode::TagVariables, "tag-variables",
+                        "Tag variables for value range analysis testing"),
              clEnumValN(ToolMode::InstrumentBranches, "instrument",
                         "Only canonicalize and instrument branches (default)")),
          cl::init(ToolMode::InstrumentBranches),
@@ -86,27 +89,25 @@ int main(int argc, const char **argv) {
     const auto &Compilations = OptionsParser.getCompilations();
     const auto &Files = OptionsParser.getSourcePathList();
     RefactoringTool Tool(Compilations, Files);
-    if (ToolMode::MakeGlobalsStaticOnly == Mode) {
-        RefactoringTool Tool(Compilations, Files);
-
-        if (int Result = runToolOnCode<dead::GlobalStaticMaker>(Tool)) {
-            llvm::errs() << "Something went wrong...\n";
-            return Result;
-        }
-        if (!applyReplacements(Tool)) {
-            llvm::errs() << "Failed to overwrite the input files.\n";
-            return 1;
-        }
-    } else {
-        RefactoringTool Tool(Compilations, Files);
-        if (int Result = runToolOnCode<dead::Instrumenter>(Tool)) {
-            llvm::errs() << "Something went wrong...\n";
-            return Result;
-        }
-        if (!applyReplacements(Tool)) {
-            llvm::errs() << "Failed to overwrite the input files.\n";
-            return 1;
-        }
+    int Result = 0;
+    switch (Mode) {
+    case ToolMode::MakeGlobalsStaticOnly:
+        Result = runToolOnCode<dead::GlobalStaticMaker>(Tool);
+        break;
+    case ToolMode::InstrumentBranches:
+        Result = runToolOnCode<dead::Instrumenter>(Tool);
+        break;
+    case ToolMode::TagVariables:
+        Result = runToolOnCode<protag::ValueRangeTagger>(Tool);
+        break;
+    }
+    if (Result) {
+        llvm::errs() << "Something went wrong...\n";
+        return Result;
+    }
+    if (!applyReplacements(Tool)) {
+        llvm::errs() << "Failed to overwrite the input files.\n";
+        return 1;
     }
 
     return 0;
