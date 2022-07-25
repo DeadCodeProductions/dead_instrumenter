@@ -72,7 +72,7 @@ bool applyReplacements(RefactoringTool &Tool) {
     return !Rewrite.overwriteChangedFiles();
 }
 
-void versionPrinter(llvm::raw_ostream &S) { S << "v0.1.0\n"; }
+void versionPrinter(llvm::raw_ostream &S) { S << "value_range_tags2\n"; }
 
 } // namespace
 
