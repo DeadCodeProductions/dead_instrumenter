@@ -1,1 +1,1 @@
-TARGET_VERSION = "v0.1.0"
+TARGET_VERSION = "value_range_tags2"
