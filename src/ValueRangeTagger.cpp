@@ -68,13 +68,14 @@ void detail::ValueRangeTaggerCallback::registerMatchers(
 namespace {
 
 auto handleLocalVars() {
-    auto matcher =
-        expr(declRefExpr(to(varDecl(hasLocalStorage()))).bind("varref"),
-             unless(hasAncestor(binaryOperator(
-                 isAssignmentOperator(), hasLHS(equalsBoundNode("varref"))))),
-             unless(hasParent(
-                 unaryOperator(hasAnyOperatorName("++", "--", "&"),
-                               hasUnaryOperand(equalsBoundNode("varref"))))));
+    auto matcher = expr(
+        declRefExpr(to(varDecl(hasLocalStorage()))).bind("varref"),
+        unless(hasParent(memberExpr())), // hack to avoid member expressions
+        unless(hasAncestor(binaryOperator(isAssignmentOperator(),
+                                          hasLHS(equalsBoundNode("varref"))))),
+        unless(hasParent(
+            unaryOperator(hasAnyOperatorName("++", "--", "&"),
+                          hasUnaryOperand(equalsBoundNode("varref"))))));
     return makeRule(
         matcher, changeTo(node("varref"),
                           cat("(", node("varref"), "),", node("varref"), ")")));
