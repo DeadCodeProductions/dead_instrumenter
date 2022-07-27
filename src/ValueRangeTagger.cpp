@@ -69,12 +69,15 @@ namespace {
 
 auto handleLocalVars() {
     auto matcher = expr(
-        declRefExpr(to(varDecl(hasLocalStorage()))).bind("varref"),
+        declRefExpr(to(varDecl(anyOf(hasLocalStorage(), hasGlobalStorage()))))
+            .bind("varref"),
+        hasAncestor(compoundStmt()),
         unless(hasParent(memberExpr())), // hack to avoid member expressions
         unless(hasAncestor(binaryOperator(isAssignmentOperator(),
                                           hasLHS(equalsBoundNode("varref"))))),
+        unless(hasAncestor(unaryOperator(hasOperatorName("&")))),
         unless(hasParent(
-            unaryOperator(hasAnyOperatorName("++", "--", "&"),
+            unaryOperator(hasAnyOperatorName("++", "--"),
                           hasUnaryOperand(equalsBoundNode("varref"))))));
     return makeRule(
         matcher, changeTo(node("varref"),
